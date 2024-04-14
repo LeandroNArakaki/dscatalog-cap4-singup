@@ -7,10 +7,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,20 +39,20 @@ public class UserService implements UserDetailsService {
 	private PasswordEncoder passwordEncoder;
 	
 	@Autowired
-	private UserRepository repository;
+	private UserRepository userRepository;
 	
 	@Autowired
 	private RoleRepository roleRepository;
 	
 	@Transactional(readOnly = true)
 	public Page<UserDTO> findAllPaged(Pageable pageable) {
-		Page<User> list = repository.findAll(pageable);
+		Page<User> list = userRepository.findAll(pageable);
 		return list.map(x -> new UserDTO(x));
 	}
 
 	@Transactional(readOnly = true)
 	public UserDTO findById(Long id) {
-		Optional<User> obj = repository.findById(id);
+		Optional<User> obj = userRepository.findById(id);
 		User entity = obj.orElseThrow(() -> new ResourceNotFoundException("Entity not found"));
 		return new UserDTO(entity);
 	}
@@ -64,16 +67,16 @@ public class UserService implements UserDetailsService {
 		entity.getRoles().add(role);
 
 		entity.setPassword(passwordEncoder.encode(dto.getPassword()));
-		entity = repository.save(entity);
+		entity = userRepository.save(entity);
 		return new UserDTO(entity);
 	}
 
 	@Transactional
 	public UserDTO update(Long id, UserUpdateDTO dto) {
 		try {
-			User entity = repository.getReferenceById(id);
+			User entity = userRepository.getReferenceById(id);
 			copyDtoToEntity(dto, entity);
-			entity = repository.save(entity);
+			entity = userRepository.save(entity);
 			return new UserDTO(entity);
 		}
 		catch (EntityNotFoundException e) {
@@ -83,11 +86,11 @@ public class UserService implements UserDetailsService {
 
     @Transactional(propagation = Propagation.SUPPORTS)
     public void delete(Long id) {
-    	if (!repository.existsById(id)) {
+    	if (!userRepository.existsById(id)) {
     		throw new ResourceNotFoundException("Recurso não encontrado");
     	}
     	try {
-            repository.deleteById(id);    		
+            userRepository.deleteById(id);
     	}
         catch (DataIntegrityViolationException e) {
             throw new DatabaseException("Falha de integridade referencial");
@@ -110,7 +113,7 @@ public class UserService implements UserDetailsService {
 	@Override
 	public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
 		
-		List<UserDetailsProjection> result = repository.searchUserAndRolesByEmail(username);
+		List<UserDetailsProjection> result = userRepository.searchUserAndRolesByEmail(username);
 		if (result.size() == 0) {
 			throw new UsernameNotFoundException("Email not found");
 		}
@@ -124,4 +127,25 @@ public class UserService implements UserDetailsService {
 		
 		return user;
 	}
+
+	@Transactional(readOnly = true)
+	public UserDTO findMe() {
+		User entity = authenticated();
+		return new UserDTO(entity);
+	}
+
+	protected User authenticated() {
+		try {
+			Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+			Jwt jwtPrincipal = (Jwt) authentication.getPrincipal();
+			String username = jwtPrincipal.getClaim("username");
+			return userRepository.findByEmail(username);
+		}
+		catch (Exception e) {
+			throw new UsernameNotFoundException("Invalid user");
+		}
+	}
+
+
+
 }

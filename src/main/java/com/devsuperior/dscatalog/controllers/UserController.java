@@ -67,4 +67,12 @@ public class UserController {
 		service.delete(id);
 		return ResponseEntity.noContent().build();
 	}
+
+	@PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_OPERATOR')")
+	@GetMapping(value = "/me")
+	public ResponseEntity<UserDTO> findMe() {
+		UserDTO dto = service.findMe() ;
+		return ResponseEntity.ok().body(dto);
+	}
+
 } 

@@ -39,6 +39,9 @@ public class AuthService {
     @Autowired
     private EmailService emailService;
 
+    @Autowired
+    private UserService userService;
+
 
     @Transactional
     public void createRecoverToken(EmailDTO emailDTO) {
@@ -68,6 +71,9 @@ public class AuthService {
         User user = userRepository.findByEmail(result.get(0).getEmail());
         user.setPassword(passwordEncoder.encode(newPasswordDTO.getPassword()));
         userRepository.save(user);
-
     }
+
+
+
+
 }
