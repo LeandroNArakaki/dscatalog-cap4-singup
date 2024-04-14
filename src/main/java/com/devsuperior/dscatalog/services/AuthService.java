@@ -1,17 +1,20 @@
 package com.devsuperior.dscatalog.services;
 
 import com.devsuperior.dscatalog.dto.EmailDTO;
+import com.devsuperior.dscatalog.dto.NewPasswordDTO;
 import com.devsuperior.dscatalog.entities.PasswordRecover;
 import com.devsuperior.dscatalog.entities.User;
 import com.devsuperior.dscatalog.repositories.PasswordRecoverRepository;
 import com.devsuperior.dscatalog.repositories.UserRepository;
 import com.devsuperior.dscatalog.services.exceptions.ResourceNotFoundException;
-import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 
@@ -25,6 +28,9 @@ public class AuthService {
     private String recoverUri;
 
     @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    @Autowired
     private UserRepository userRepository;
 
     @Autowired
@@ -32,6 +38,7 @@ public class AuthService {
 
     @Autowired
     private EmailService emailService;
+
 
     @Transactional
     public void createRecoverToken(EmailDTO emailDTO) {
@@ -49,5 +56,18 @@ public class AuthService {
         String bodyText = "Acesse o link para recuparar sua senha\n\n" + recoverUri + entity.getToken() + ". Validade de " + tokenMinutes + "minutos.";
 
         emailService.sendEmail(emailDTO.getEmail(), "Recuperação de senha", bodyText);
+    }
+
+    @Transactional
+    public void saveNewPassword(NewPasswordDTO newPasswordDTO) {
+        List<PasswordRecover> result = passwordRecoverRepository.searchValidTokens(newPasswordDTO.getToken(), Instant.now());
+        if (result.size() == 0) {
+            throw new ResourceNotFoundException("Token invalido");
+        }
+
+        User user = userRepository.findByEmail(result.get(0).getEmail());
+        user.setPassword(passwordEncoder.encode(newPasswordDTO.getPassword()));
+        userRepository.save(user);
+
     }
 }

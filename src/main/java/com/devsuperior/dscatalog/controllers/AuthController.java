@@ -1,6 +1,7 @@
 package com.devsuperior.dscatalog.controllers;
 
 import com.devsuperior.dscatalog.dto.EmailDTO;
+import com.devsuperior.dscatalog.dto.NewPasswordDTO;
 import com.devsuperior.dscatalog.dto.UserDTO;
 import com.devsuperior.dscatalog.dto.UserInsertDTO;
 import com.devsuperior.dscatalog.dto.UserUpdateDTO;
@@ -34,6 +35,12 @@ public class AuthController {
 	@PostMapping(value = "recover-token")
 	public ResponseEntity<Void> createRecoverToken(@Valid @RequestBody EmailDTO emailDTO) {
 		authService.createRecoverToken(emailDTO);
+		return ResponseEntity.noContent().build();
+	}
+
+	@PutMapping(value = "new-password")
+	public ResponseEntity<Void> saveNewPassword(@Valid @RequestBody NewPasswordDTO newPasswordDTO) {
+		authService.saveNewPassword(newPasswordDTO);
 		return ResponseEntity.noContent().build();
 	}
 
