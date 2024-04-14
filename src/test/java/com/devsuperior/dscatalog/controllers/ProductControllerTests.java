@@ -1,4 +1,4 @@
-package com.devsuperior.dscatalog.resources;
+package com.devsuperior.dscatalog.controllers;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -33,8 +33,8 @@ import com.devsuperior.dscatalog.tests.Factory;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 // https://stackoverflow.com/questions/39554285/spring-test-returning-401-for-unsecured-urls
-@WebMvcTest(value = ProductResource.class, excludeAutoConfiguration = {SecurityAutoConfiguration.class})
-public class ProductResourceTests {
+@WebMvcTest(value = ProductController.class, excludeAutoConfiguration = {SecurityAutoConfiguration.class})
+public class ProductControllerTests {
 
 	@Autowired
 	private MockMvc mockMvc;

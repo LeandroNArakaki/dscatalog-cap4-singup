@@ -1,4 +1,4 @@
-package com.devsuperior.dscatalog.resources;
+package com.devsuperior.dscatalog.controllers;
 
 import java.net.URI;
 
@@ -22,7 +22,7 @@ import com.devsuperior.dscatalog.services.CategoryService;
 
 @RestController
 @RequestMapping(value = "/categories")
-public class CategoryResource {
+public class CategoryController {
 
 	@Autowired
 	private CategoryService service;
